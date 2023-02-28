@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model province {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  type        String?  @db.VarChar(255)
+  district   district[] 
+}
+
+model district {
+  id            Int         @id @default(autoincrement())
+  name          String      @db.VarChar(255)
+  type          String?     @db.VarChar(255) 
+  province      province   @relation(fields: [province_id], references: [id])
+  province_id   Int
+  ward          ward[]
+}
+
+model ward {
+  id            Int         @id @default(autoincrement())
+  name          String      @db.VarChar(255)
+  type          String?     @db.VarChar(255) 
+  district      district   @relation(fields: [district_id], references: [id])
+  district_id       Int
+}
+
+model users {
+  id              Int         @id @default(autoincrement())
+  email           String      @unique
+  password        String
+  full_name       String
+  organization    String?
+  date_of_birth   DateTime
+  identity_card   String      @unique
+  identity_card_date    DateTime
+  identity_card_address   String
+  phone_number    String      @unique
+  fax     String?
+  website     String?
+  ward      String
+  address     String
+  role    Int @default(0)
+  remember_token      String?
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  files files[]
+}
+
+model info_user {
+  id              Int         @id @default(autoincrement())
+  full_name       String
+  phone_number    String
+  email           String?
+  organization    String?
+  identity_card   String?
+  identity_card_date    DateTime?
+  identity_card_address     String
+  fax     String?
+  website   String?
+  ward      String?
+  address   String?
+  files     files[]
+}
+
+model organization_field {
+  id        Int         @id @default(autoincrement())
+  organizations   organizations  @relation(fields: [id_organization], references: [id])
+  id_organization   Int
+  fields  fields   @relation(fields: [id_field], references: [id])
+  id_field  Int
+}
+
+model fields {
+  id      Int         @id @default(autoincrement())
+  key     String
+  name    String
+  description   String?
+  organization_field   organization_field[]
+  procedures      procedures[]
+}
+
+model organizations {
+  id      Int         @id @default(autoincrement())
+  key     String      @unique
+  name     String
+  organization_field    organization_field[]
+  groups      groups[]
+}
+
+
+model groups {
+  id        Int         @id @default(autoincrement())
+  organizations   organizations  @relation(fields: [id_organization], references: [id])
+  id_organization   Int 
+  name      String
+  note      String?
+  procedure_steps       procedure_steps[]
+  files       files[]
+}
+
+model procedures {
+  id      Int         @id @default(autoincrement())
+  key   String
+  fields  fields   @relation(fields: [id_field], references: [id])
+  id_field  Int
+  name    String
+  thanh_phan_ho_so    String
+  cach_thuc_thuc_hien   String?
+  doi_tuong_thuc_hien     String?
+  trinh_tu_thuc_hien      String?
+  thoi_han_giai_quyet     String?
+  le_phi        String?
+  so_luong_ho_so    Int?
+  yeu_cau_dieu_kien     String?
+  can_cu_phap_ly      String?
+  ket_qua_thuc_hien     String?
+  level   Int @default(0)
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  deleted_at      DateTime?
+  procedure_fs      procedure_fs[]
+  files     files[]
+  procedure_options procedure_options[]
+}
+
+model templates {
+  id      Int         @id @default(autoincrement())
+  name    String
+  data    String
+  procedure_options   procedure_options[]
+}
+
+
+model procedure_options {
+  id Int @id @default(autoincrement())
+  procedures    procedures @relation(fields: [id_procedure], references: [id])
+  id_procedure    Int
+  templates    templates @relation(fields: [id_template], references: [id])
+  id_template     Int
+  name      String
+  processing_time   Int
+  procedure_steps   procedure_steps[]
+}
+
+
+
+model procedure_steps {
+  id    Int @id @default(autoincrement())
+  procedure_options    procedure_options @relation(fields: [id_option], references: [id])
+  id_option     Int
+  groups    groups @relation(fields: [id_group], references: [id])
+  id_group    Int
+  name    String
+  note    String?
+  order    Int @default(0)
+  files   files[]
+} 
+
+model files {
+  id        Int         @id @default(autoincrement())
+  key       String
+  procedures    procedures @relation(fields: [id_procedure], references: [id])
+  id_procedure     Int
+  users   users @relation(fields: [id_user], references: [id])
+  id_user Int
+  groups   groups @relation(fields: [id_option], references: [id])
+  id_option Int
+  procedure_steps procedure_steps @relation(fields: [id_step], references: [id])
+  id_step     Int
+  info_user info_user @relation(fields: [id_info_user], references: [id])
+  id_info_user    Int
+  access_key    String?
+  processing_time   Int
+  data_template     String
+  data        String
+  status    Int @default(0)
+  accepted_at     DateTime?
+  finished_at     DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime?
+  deleted_at      DateTime?
+}
+
+model file_storage {
+  id        Int         @id @default(autoincrement())
+  title     String
+  category    String
+  path        String
+  procedure_fs    procedure_fs[]
+}
+
+model procedure_fs {
+  id      Int         @id @default(autoincrement())
+  procedures  procedures   @relation(fields: [id_procedure], references: [id])
+  id_procedure  Int
+  file_storage  file_storage   @relation(fields: [id_fs], references: [id])
+  id_fs     Int
+}
+
