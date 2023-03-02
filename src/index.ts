@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import App from "./app";
 import addressController from "./controllers/address";
+import adminAuthController from "./controllers/admin/auth";
+import adminUserController from "./controllers/admin/user";
 import authController from "./controllers/auth";
 import fieldsController from "./controllers/fields";
 import organizationController from "./controllers/organizations";
@@ -16,6 +18,8 @@ const app = new App(
     new organizationController(),
     new proceduresController(),
     new fieldsController(),
+    new adminAuthController(),
+    new adminUserController(),
   ],
   port,
 );
