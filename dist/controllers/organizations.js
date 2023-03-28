@@ -57,7 +57,7 @@ class organizationController extends base_1.BaseController {
     }
     initializeRoutes() {
         this.router.get(this.path + "/get-group-fields", this.getGroupFields);
-        this.router.get(this.path + "/admin/get", this.getAllOrganizations);
+        this.router.get(this.path + "/get", this.getAllOrganizations);
     }
 }
 exports.default = organizationController;

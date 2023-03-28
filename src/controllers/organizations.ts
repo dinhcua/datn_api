@@ -12,7 +12,7 @@ export default class organizationController extends BaseController {
 
   public initializeRoutes() {
     this.router.get(this.path + "/get-group-fields", this.getGroupFields);
-    this.router.get(this.path + "/admin/get", this.getAllOrganizations);
+    this.router.get(this.path + "/get", this.getAllOrganizations);
   }
   getGroupFields = async (
     request: express.Request,

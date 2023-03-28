@@ -69,10 +69,10 @@ class proceduresController extends base_1.BaseController {
                     to: proceduresLength,
                     total: totalProcedures,
                     next_page_url: procedures.length === numPerPage
-                        ? `http://localhost:8000/api/procedures/get?page=${numPage + 1}&perPage=10`
+                        ? `http://localhost:8000/api/procedures/get?page=${numPage + 1}&perPage=${numPerPage}`
                         : null,
                     prev_page_url: numPage > 1
-                        ? `http://localhost:8000/api/procedures/get?page=${numPage - 1}&perPage=10`
+                        ? `http://localhost:8000/api/procedures/get?page=${numPage - 1}&perPage=${numPerPage}`
                         : null,
                 };
                 if (result) {

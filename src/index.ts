@@ -2,6 +2,10 @@ import dotenv from "dotenv";
 import App from "./app";
 import addressController from "./controllers/address";
 import adminAuthController from "./controllers/admin/auth";
+import adminFieldsController from "./controllers/admin/fields";
+import adminGroupsController from "./controllers/admin/groups";
+import adminOrganizationController from "./controllers/admin/organizations";
+import adminProcedureController from "./controllers/admin/procedures";
 import adminUserController from "./controllers/admin/user";
 import authController from "./controllers/auth";
 import fieldsController from "./controllers/fields";
@@ -20,6 +24,10 @@ const app = new App(
     new fieldsController(),
     new adminAuthController(),
     new adminUserController(),
+    new adminOrganizationController(),
+    new adminFieldsController(),
+    new adminProcedureController(),
+    new adminGroupsController(),
   ],
   port,
 );

@@ -94,13 +94,13 @@ export default class proceduresController extends BaseController {
           procedures.length === numPerPage
             ? `http://localhost:8000/api/procedures/get?page=${
                 numPage + 1
-              }&perPage=10`
+              }&perPage=${numPerPage}`
             : null,
         prev_page_url:
           numPage > 1
             ? `http://localhost:8000/api/procedures/get?page=${
                 numPage - 1
-              }&perPage=10`
+              }&perPage=${numPerPage}`
             : null,
       };
       if (result) {
