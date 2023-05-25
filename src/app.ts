@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { BaseController } from "./controllers/abstractions/base";
+import bodyParser from "body-parser";
 import errorMiddleware from "./middlewares/error";
 
 class App {
@@ -11,14 +12,15 @@ class App {
     this.app = express();
     this.port = port;
 
-    this.app.use(cors());
-
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
     this.initializeErrorHandling();
   }
 
   private initializeMiddlewares() {
+    this.app.use(cors());
+    this.use(bodyParser.urlencoded({ extended: false }));
+    this.use(bodyParser.json());
     this.app.use(express.json());
   }
 
