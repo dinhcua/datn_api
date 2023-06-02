@@ -71,7 +71,6 @@ class authController extends base_1.BaseController {
                     },
                 })) || { name: "" };
                 const hashPassword = bcrypt_1.default.hashSync(reqBody.password, Number.parseInt(process.env.SALT_ROUNDS));
-                console.log(hashPassword);
                 const address = (ward === null || ward === void 0 ? void 0 : ward.name) + ", " + (district === null || district === void 0 ? void 0 : district.name) + ", " + (province === null || province === void 0 ? void 0 : province.name);
                 const user = await this.prisma.users.create({
                     data: {
@@ -80,6 +79,22 @@ class authController extends base_1.BaseController {
                         full_name: reqBody.full_name,
                         organization: reqBody.organization,
                         date_of_birth: new Date(reqBody.date_of_birth),
+                        identity_card: reqBody.identity_card,
+                        identity_card_date: new Date(reqBody.identity_card_date),
+                        identity_card_address: reqBody.identity_card_address,
+                        phone_number: reqBody.phone_number,
+                        fax: reqBody.fax,
+                        website: reqBody.website,
+                        ward: reqBody.ward,
+                        address,
+                    },
+                });
+                const info_user = await this.prisma.info_user.create({
+                    data: {
+                        id_user: user.id,
+                        email: reqBody.email,
+                        full_name: reqBody.full_name,
+                        organization: reqBody.organization,
                         identity_card: reqBody.identity_card,
                         identity_card_date: new Date(reqBody.identity_card_date),
                         identity_card_address: reqBody.identity_card_address,
@@ -99,7 +114,9 @@ class authController extends base_1.BaseController {
                     expires_in: "36000",
                     token_type: "bearer",
                 };
-                response.json({ data: { user, token } });
+                if (user && info_user) {
+                    response.json({ data: { user, token } });
+                }
             }
             else {
                 next(new notFound_1.default());

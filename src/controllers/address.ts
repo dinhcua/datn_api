@@ -14,6 +14,7 @@ export default class addressController extends BaseController {
     this.router.get(this.path + "/province", this.getAllProvinces);
     this.router.get(this.path + "/district/:id", this.getDistrictByProvinceId);
     this.router.get(this.path + "/ward/:id", this.getWardByDistrictId);
+    this.router.get(this.path + "/address/:ward_id", this.getAddress);
   }
   getAllProvinces = async (
     request: express.Request,
@@ -40,6 +41,7 @@ export default class addressController extends BaseController {
       next(new NotFoundException());
     }
   };
+
   getWardByDistrictId = async (
     request: express.Request,
     response: express.Response,
@@ -57,5 +59,50 @@ export default class addressController extends BaseController {
     } else {
       next(new NotFoundException());
     }
+  };
+
+  getAddress = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const ward_id = Number.parseInt(request.params.ward_id);
+
+    const ward = await this.prisma.ward.findUnique({
+      where: {
+        id: ward_id,
+      },
+    });
+
+    const district = await this.prisma.district.findUnique({
+      where: {
+        id: ward?.district_id,
+      },
+    });
+
+    const wards = await this.prisma.ward.findMany({
+      where: { district_id: district?.id },
+    });
+
+    // const provinces = await this.prisma.province.findMany({});
+    const province = await this.prisma.province.findUnique({
+      where: {
+        id: district?.province_id,
+      },
+    });
+
+    const districts = await this.prisma.district.findMany({
+      where: { province_id: province?.id },
+    });
+
+    const data = {
+      ward: ward?.id,
+      wards,
+      district: district?.id,
+      districts,
+      province: province?.id,
+    };
+
+    response.json(data);
   };
 }

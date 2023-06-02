@@ -13,6 +13,8 @@ export default class adminGroupsController extends BaseController {
   public initializeRoutes() {
     this.router.get(this.path + "/get", this.getAllFields);
     this.router.get(this.path + "/get/:id", this.getGroupById);
+    this.router.post(this.path + "/add", this.addGroup);
+    this.router.put(this.path + "/edit", this.editGroup);
   }
 
   getAllFields = async (
@@ -25,13 +27,6 @@ export default class adminGroupsController extends BaseController {
     if (typeof page === "string" && typeof perPage === "string") {
       const numPage = Number.parseInt(page);
       const numPerPage = Number.parseInt(perPage);
-
-      // const searchText =
-      //   typeof q === "string"
-      //     ? {
-      //         OR: [{ name: { contains: q } }, { key: { contains: q } }],
-      //       }
-      //     : {};
 
       const skip = (numPage - 1) * numPerPage;
       const totalGroups = await (await this.prisma.groups.findMany()).length;
@@ -47,7 +42,15 @@ export default class adminGroupsController extends BaseController {
             where: { id: field.id_organization },
           });
 
-          return { ...field, organization, users: [] };
+          const users = await this.prisma.users.findMany({
+            where: {
+              role: 1,
+              organization: field.name,
+              id_organization: field.id,
+            },
+          });
+
+          return { ...field, organization, users };
         }),
       );
 
@@ -87,19 +90,92 @@ export default class adminGroupsController extends BaseController {
     const id = request.params.id;
     if (typeof id === "string") {
       const group_id = Number.parseInt(id);
+
       const group = await this.prisma.groups.findUnique({
         where: { id: group_id },
       });
 
+      const users = await this.prisma.users.findMany({
+        where: {
+          role: 1,
+          organization: group?.name,
+          id_organization: group_id,
+        },
+      });
+
       if (group) {
         return response.json({
-          data: group,
+          data: { ...group, users },
           success: true,
           message: "Thao tác thành công",
         });
       } else {
         next(new NotFoundException());
       }
+    }
+  };
+
+  addGroup = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const reqBody = request.body;
+
+    const addGroup = await this.prisma.groups.create({
+      data: {
+        id_organization: Number.parseInt(reqBody.id_organization),
+        name: reqBody.name,
+        note: reqBody.note,
+      },
+    });
+
+    if (addGroup) {
+      response.json({ success: "true", message: "Thanh cong" });
+    }
+  };
+
+  editGroup = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const reqBody = request.body;
+    const group_id = Number.parseInt(reqBody.id);
+
+    const updateGroup = await this.prisma.groups.update({
+      where: {
+        id: group_id,
+      },
+      data: {
+        name: reqBody.name,
+        id_organization: Number.parseInt(reqBody.id_organization),
+        note: reqBody.note,
+      },
+    });
+
+    const updateUser = await Promise.all(
+      reqBody.users.map(async (id_user: string) => {
+        await this.prisma.users.update({
+          where: {
+            id: Number.parseInt(id_user),
+          },
+          data: {
+            id_organization: Number.parseInt(reqBody.id),
+            organization: reqBody.name,
+          },
+        });
+      }),
+    );
+
+    if (updateUser) {
+      response.json({
+        success: true,
+        data: updateGroup,
+        message: "Sua thanh cong",
+      });
+    } else {
+      next(new NotFoundException());
     }
   };
 }

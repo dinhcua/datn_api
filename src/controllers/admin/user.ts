@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import express from "express";
 import NotFoundException from "../../exceptions/notFound";
 import { BaseController } from "../abstractions/base";
@@ -12,7 +14,9 @@ export default class adminUserController extends BaseController {
 
   public initializeRoutes() {
     this.router.get(this.path + "users/get", this.getAllFields);
-    this.router.get(this.path + "user/groups", this.getUserGroups);
+    this.router.get(this.path + "users/groups/:id_user", this.getUserGroups);
+    this.router.get(this.path + "users/get/:id", this.getUserById);
+    this.router.post(this.path + "users/add", this.register);
   }
 
   getAllFields = async (
@@ -32,14 +36,25 @@ export default class adminUserController extends BaseController {
       const totalFields = await (
         await this.prisma.users.findMany({ where })
       ).length;
-      const users = await this.prisma.users.findMany({
+
+      let users = await this.prisma.users.findMany({
         where,
         skip,
         take: numPerPage,
         orderBy: { id: "asc" },
       });
 
-      const fieldsLength = users.length;
+      let fieldsLength = users.length;
+
+      if (typeof f === "string") {
+        const query = JSON.parse(f);
+        users = query?.role
+          ? users.filter((user) => user.role === Number.parseInt(query.role))
+          : users;
+
+        fieldsLength = users.length;
+      }
+
       const result = {
         current_page: numPage,
         data: users,
@@ -64,27 +79,166 @@ export default class adminUserController extends BaseController {
       } else {
         next(new NotFoundException());
       }
-    }
-    if (typeof f === "string") {
+    } else if (typeof f === "string") {
       const query = JSON.parse(f);
-      const users = await this.prisma.users.findMany({ where: query });
-      if (users.length) {
-        response.json({
-          data: users,
-          success: true,
-          message: "Thao tác thành công",
+
+      const role = Number.parseInt(query.role);
+
+      if (typeof role === "number") {
+        const users = await this.prisma.users.findMany({
+          where: { role },
         });
+        response.json({ data: users });
       } else {
-        next(new NotFoundException());
+        response.json({ data: [] });
       }
     }
   };
+
+  getUserById = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const user_id = Number.parseInt(request.params.id);
+
+    const user = await this.prisma.users.findUnique({ where: { id: user_id } });
+
+    if (user) {
+      response.json({
+        data: user,
+        success: true,
+        message: "Thao tác thành công",
+      });
+    } else {
+      next(new NotFoundException());
+    }
+  };
+
   getUserGroups = async (
     request: express.Request,
     response: express.Response,
     next: express.NextFunction,
   ) => {
-    // const groups = await this.prisma.groups.findMany({});
-    response.json({ data: [] });
+    const id_user = request.params.id_user;
+
+    const groups = await this.prisma.groups.findMany({
+      where: {
+        note: { contains: id_user },
+      },
+      orderBy: {
+        id: "asc",
+      },
+    });
+
+    response.json({ data: groups });
+  };
+
+  register = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const reqBody = request.body;
+
+    const checkInit = await this.prisma.users.findMany({
+      where: {
+        OR: [
+          { email: reqBody.email },
+          { phone_number: reqBody.phone_number },
+          { identity_card: reqBody.identity_card },
+        ],
+      },
+    });
+
+    if (
+      !checkInit.length &&
+      process.env.JWT_SECRET &&
+      process.env.SALT_ROUNDS
+    ) {
+      const province = (await this.prisma.province.findUnique({
+        where: {
+          id: +reqBody.province,
+        },
+      })) || { name: "" };
+
+      const district = (await this.prisma.district.findUnique({
+        where: {
+          id: +reqBody.district,
+        },
+      })) || { name: "" };
+
+      const ward = (await this.prisma.ward.findUnique({
+        where: {
+          id: +reqBody.ward,
+        },
+      })) || { name: "" };
+
+      const hashPassword = bcrypt.hashSync(
+        reqBody.password,
+        Number.parseInt(process.env.SALT_ROUNDS),
+      );
+
+      const address =
+        ward?.name + ", " + district?.name + ", " + province?.name;
+
+      const user = await this.prisma.users.create({
+        data: {
+          password: hashPassword,
+          email: reqBody.email,
+          full_name: reqBody.full_name,
+          organization: reqBody.organization,
+          date_of_birth: new Date(reqBody.date_of_birth),
+          identity_card: reqBody.identity_card,
+          identity_card_date: new Date(reqBody.identity_card_date),
+          identity_card_address: reqBody.identity_card_address,
+          phone_number: reqBody.phone_number,
+          fax: reqBody.fax,
+          website: reqBody.website,
+          ward: reqBody.ward,
+          address,
+          role: reqBody.role,
+        },
+      });
+
+      const payload = { user: { id: user.id } };
+
+      const generateToken = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "36000",
+      });
+
+      const token = {
+        access_token: generateToken,
+        expires_in: "36000",
+        token_type: "bearer",
+      };
+
+      const info_user = await this.prisma.info_user.create({
+        data: {
+          id_user: user.id,
+          email: reqBody.email,
+          full_name: reqBody.full_name,
+          organization: reqBody.organization,
+          identity_card: reqBody.identity_card,
+          identity_card_date: new Date(reqBody.identity_card_date),
+          identity_card_address: reqBody.identity_card_address,
+          phone_number: reqBody.phone_number,
+          fax: reqBody.fax,
+          website: reqBody.website,
+          ward: reqBody.ward,
+          address,
+        },
+      });
+
+      const result = {
+        data: { user, token },
+        success: true,
+        message: "Thêm tài khoản thành công",
+      };
+
+      response.json(result);
+    } else {
+      next(new NotFoundException());
+    }
   };
 }

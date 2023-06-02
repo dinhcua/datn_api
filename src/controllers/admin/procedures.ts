@@ -1,7 +1,9 @@
 import express from "express";
 import NotFoundException from "../../exceptions/notFound";
 import { BaseController } from "../abstractions/base";
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 
+const fs = require("fs");
 export default class adminProcedureController extends BaseController {
   public path = "/api/admin/procedures";
 
@@ -12,10 +14,24 @@ export default class adminProcedureController extends BaseController {
 
   public initializeRoutes() {
     this.router.get(this.path + "/get", this.getAllProcedures);
+    this.router.get(this.path + "/get/:id", this.getProcedureById);
     this.router.post(this.path + "/add", this.addProcedure);
-    this.router.get(this.path + "/options/get/:id", this.getOption);
+    this.router.post(this.path + "/options/add", this.addProcedureOption);
+    this.router.get(
+      this.path + "/options/get/:id_procedure",
+      this.getOptionByProcedureId,
+    );
+    this.router.get(
+      this.path + "/option/get/:id_option",
+      this.getOptionByOptionId,
+    );
     this.router.post(this.path + "/steps/add", this.addSteps);
-    this.router.get(this.path + "/steps/get/:id_option", this.getSteps);
+    this.router.get(
+      this.path + "/steps/get/:id_option",
+      this.getStepsByOptionId,
+    );
+    this.router.get(this.path + "/step/get/:id_step", this.getStepById);
+    this.router.put(this.path + "/steps/edit", this.editStepById);
   }
 
   getAllProcedures = async (
@@ -87,6 +103,23 @@ export default class adminProcedureController extends BaseController {
     }
   };
 
+  getProcedureById = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const id_procedure = Number.parseInt(request.params.id);
+    const procedure = await this.prisma.procedures.findUnique({
+      where: { id: id_procedure },
+    });
+    const field = await this.prisma.fields.findUnique({
+      where: { id: procedure?.id_field },
+    });
+    const data = { ...procedure, field };
+
+    response.json({ success: true, data, message: "Thành công" });
+  };
+
   addProcedure = async (
     request: express.Request,
     response: express.Response,
@@ -94,102 +127,289 @@ export default class adminProcedureController extends BaseController {
   ) => {
     const reqBody = request.body;
 
-    const totalProcedures = await this.prisma.procedures.count();
+    // const thanh_phan_ho_so = reqBody.thanh_phan_ho_so;
 
-    const procedure = await this.prisma.procedures.create({
+    const thanh_phan_ho_so = reqBody.thanh_phan_ho_so.map(
+      (thanh_phan: string, index: number) =>
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${
+                index + 1
+              }. ${thanh_phan.toLowerCase()}............................................................................`,
+            }),
+          ],
+        }),
+    );
+
+    // Create a new Document instance
+
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+                  bold: true,
+                }),
+              ],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Độc lập - Tự do - Hạnh phúc",
+                  bold: true,
+                }),
+              ],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Quảng Ninh, ngày... tháng ... năm 202...",
+                }),
+              ],
+              alignment: AlignmentType.RIGHT,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${reqBody.name}`,
+                }),
+              ],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "-----------------------------------",
+                }),
+              ],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Kính gửi: ${reqBody.ten_co_quan} `,
+                  bold: true,
+                }),
+              ],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "- Tên cơ quan, tổ chức, đơn vị :.....................................................................",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "- Địa chỉ:.......................................................... Số điện thoại:.......................",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "- Số Fax/Email:..............................................................................................",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Xin phép tổ chức họp báo với các thông tin như sau:",
+                }),
+              ],
+            }),
+            ...thanh_phan_ho_so,
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${reqBody.note}`,
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "",
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Người đứng đầu cơ quan, tổ chức, đơn vị",
+                  bold: true,
+                }),
+              ],
+              alignment: AlignmentType.RIGHT,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "(ký, đóng dấu, ghi rõ họ tên)",
+                }),
+              ],
+              alignment: AlignmentType.RIGHT,
+            }),
+          ],
+        },
+      ],
+    });
+
+    // Save the generated document to a file
+    const outputPath = "output.docx";
+    Packer.toBuffer(doc).then((buffer) => {
+      fs.writeFileSync(outputPath, buffer);
+      console.log("Document generated successfully!");
+    });
+
+    const procedure = await this.prisma.procedures.createMany({
       data: {
-        id: totalProcedures + 1,
-        ...reqBody,
+        id: Math.floor(Math.random() * 1000),
+        key: reqBody.key,
+        id_field: Number.parseInt(reqBody.id_field),
+        name: reqBody.name,
+        thanh_phan_ho_so: "",
+        cach_thuc_thuc_hien: reqBody.cach_thuc_thuc_hien,
+        doi_tuong_thuc_hien: reqBody.doi_tuong_thuc_hien,
+        trinh_tu_thuc_hien: reqBody.trinh_tu_thuc_hien,
+        thoi_han_giai_quyet: reqBody.thoi_han_giai_quyet,
+        le_phi: reqBody.le_phi,
+        so_luong_ho_so: Number.parseInt(reqBody.so_luong_ho_so),
+        yeu_cau_dieu_kien: reqBody.yeu_cau_dieu_kien,
+        can_cu_phap_ly: reqBody.can_cu_phap_ly,
+        ket_qua_thuc_hien: reqBody.ket_qua_thuc_hien,
+        level: Number.parseInt(reqBody.level),
       },
     });
 
     const result = {
       data: procedure,
-      success: true,
+      success: false,
       message: "Thao tac thanh cong",
     };
 
-    if (result) {
+    if (procedure) {
       response.json(result);
     } else {
       next(new NotFoundException());
     }
   };
 
-  //   {
-  //     "success": true,
-  //     "data": {
-  //         "id": 4,
-  //         "id_procedure": 5,
-  //         "id_template": 2,
-  //         "name": "dinhcua11",
-  //         "processing_time": 25,
-  //         "created_at": "2023-03-28T03:07:38.000000Z",
-  //         "updated_at": "2023-03-28T03:07:38.000000Z",
-  //         "deleted_at": null,
-  //         "procedure": {
-  //             "id": 5,
-  //             "key": "gầ",
-  //             "id_field": 4,
-  //             "name": "agdga",
-  //             "thanh_phan_ho_so": [
-  //                 null
-  //             ],
-  //             "cach_thuc_thuc_hien": null,
-  //             "doi_tuong_thuc_hien": null,
-  //             "trinh_tu_thuc_hien": null,
-  //             "thoi_han_giai_quyet": null,
-  //             "le_phi": null,
-  //             "so_luong_ho_so": null,
-  //             "yeu_cau_dieu_kien": null,
-  //             "can_cu_phap_ly": null,
-  //             "ket_qua_thuc_hien": null,
-  //             "level": 2,
-  //             "created_at": "2023-03-28T03:07:03.000000Z",
-  //             "updated_at": "2023-03-28T03:07:03.000000Z",
-  //             "deleted_at": null
-  //         },
-  //         "template": {
-  //             "id": 2,
-  //             "name": "Mặc định (Lý do nộp)",
-  //             "data": "[{\"label\":\"Lý do\",\"name\":\"ly_do\",\"type\":\"textbox\"}]",
-  //             "created_at": "2021-06-10T00:59:45.000000Z",
-  //             "updated_at": "2021-06-10T00:59:45.000000Z",
-  //             "deleted_at": null
-  //         }
-  //     },
-  //     "message": "Thao tác thành công"
-  // }
-
-  getOption = async (
+  addProcedureOption = async (
     request: express.Request,
     response: express.Response,
     next: express.NextFunction,
   ) => {
-    const id_procedure = Number.parseInt(request.params.id);
+    const reqBody = request.body;
+    const addProcedureOption = await this.prisma.procedure_options.createMany({
+      data: [
+        {
+          id_procedure: Number.parseInt(reqBody.id_procedure),
+          id_template: 2,
+          name: reqBody.name,
+          processing_time: Number.parseInt(reqBody.processing_time),
+        },
+      ],
+    });
+
+    if (addProcedureOption) {
+      response.json({ success: true, message: "Thanh công" });
+    }
+  };
+
+  getOptionByProcedureId = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const id_procedure = Number.parseInt(request.params.id_procedure);
 
     const option = await this.prisma.procedure_options.findFirst({
       where: { id_procedure },
     });
 
-    const template = this.prisma.templates.findUnique({
-      where: { id: option?.id_template },
+    if (!option) {
+      response.json({
+        message: "Thao tác thành công",
+        success: true,
+        data: 0,
+      });
+    } else {
+      const template = await this.prisma.templates.findUnique({
+        where: { id: 2 },
+      });
+
+      const procedure = await this.prisma.procedures.findUnique({
+        where: { id: id_procedure },
+      });
+
+      const result = {
+        message: "Thao tác thành công",
+        success: true,
+        data: {
+          ...option,
+          template,
+          procedure,
+        },
+      };
+
+      if (result) {
+        response.json(result);
+      } else {
+        next(new NotFoundException());
+      }
+    }
+  };
+
+  getOptionByOptionId = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const id_option = Number.parseInt(request.params.id_option);
+
+    const option = await this.prisma.procedure_options.findUnique({
+      where: { id: id_option },
     });
 
-    const result = {
-      message: "Thao tác thành công",
-      success: true,
-      data: {
-        ...option,
-        template,
+    const procedure = await this.prisma.procedures.findUnique({
+      where: {
+        id: option?.id_procedure,
       },
-    };
+    });
 
-    if (result) {
-      response.json(result);
-    } else {
-      next(new NotFoundException());
-    }
+    response.json({ success: true, data: { ...option, procedure } });
   };
 
   addSteps = async (
@@ -197,23 +417,22 @@ export default class adminProcedureController extends BaseController {
     response: express.Response,
     next: express.NextFunction,
   ) => {
-    const totalSteps = await this.prisma.procedure_steps.count();
-
     const reqBody = request.body;
-
     const order = await this.prisma.procedure_steps.findMany({
       where: { id_option: Number.parseInt(reqBody.id_option) },
     });
 
-    const step = await this.prisma.procedure_steps.create({
-      data: {
-        id: totalSteps + 1,
-        name: reqBody.name,
-        note: reqBody.note,
-        id_group: Number.parseInt(reqBody.id_group),
-        id_option: Number.parseInt(reqBody.id_option),
-        order: order.length + 1,
-      },
+    const step = await this.prisma.procedure_steps.createMany({
+      data: [
+        {
+          id_procedure: Number.parseInt(reqBody.id_procedure),
+          name: reqBody.name,
+          note: reqBody.note,
+          id_group: Number.parseInt(reqBody.id_group),
+          id_option: Number.parseInt(reqBody.id_option),
+          order: order.length + 1,
+        },
+      ],
     });
 
     const result = {
@@ -222,22 +441,25 @@ export default class adminProcedureController extends BaseController {
       data: step,
     };
 
-    if (result) {
+    if (step) {
       response.json(result);
     } else {
       next(new NotFoundException());
     }
   };
 
-  getSteps = async (
+  getStepsByOptionId = async (
     request: express.Request,
     response: express.Response,
     next: express.NextFunction,
-  ) => {      
+  ) => {
     const id_option = Number.parseInt(request.params.id_option);
 
     const steps = await this.prisma.procedure_steps.findMany({
       where: { id_option },
+      orderBy: {
+        order: "asc",
+      },
     });
 
     const data = await Promise.all(
@@ -260,6 +482,69 @@ export default class adminProcedureController extends BaseController {
       response.json(result);
     } else {
       next(new NotFoundException());
+    }
+  };
+
+  getStepById = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const id_step = Number.parseInt(request.params.id_step);
+
+    const step = await this.prisma.procedure_steps.findUnique({
+      where: { id: id_step },
+    });
+
+    const group = await this.prisma.groups.findUnique({
+      where: { id: step?.id_group },
+    });
+
+    const option = await this.prisma.procedure_options.findFirst({
+      where: {
+        id_procedure: step?.id_procedure,
+      },
+    });
+
+    const data = { ...step, group, option };
+
+    const result = {
+      message: "Thao tác thành công",
+      success: true,
+      data,
+    };
+
+    if (result) {
+      response.json(result);
+    } else {
+      next(new NotFoundException());
+    }
+  };
+
+  editStepById = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const reqBody = request.body;
+    console.log(reqBody);
+    const id_step = Number.parseInt(request.body.id);
+
+    const updateStep = await this.prisma.procedure_steps.update({
+      where: {
+        id: id_step,
+      },
+      data: {
+        id_group: Number.parseInt(reqBody.id_group),
+        name: reqBody.name,
+        note: reqBody.note,
+      },
+    });
+
+    if (updateStep) {
+      response.json({ success: true });
+    } else {
+      response.json({ success: false });
     }
   };
 }

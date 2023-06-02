@@ -89,6 +89,22 @@ class authController extends base_1.BaseController {
                         address,
                     },
                 });
+                const info_user = await this.prisma.info_user.create({
+                    data: {
+                        id_user: user.id,
+                        email: reqBody.email,
+                        full_name: reqBody.full_name,
+                        organization: reqBody.organization,
+                        identity_card: reqBody.identity_card,
+                        identity_card_date: new Date(reqBody.identity_card_date),
+                        identity_card_address: reqBody.identity_card_address,
+                        phone_number: reqBody.phone_number,
+                        fax: reqBody.fax,
+                        website: reqBody.website,
+                        ward: reqBody.ward,
+                        address,
+                    },
+                });
                 const payload = { user: { id: user.id } };
                 const generateToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
                     expiresIn: "36000",
@@ -98,7 +114,9 @@ class authController extends base_1.BaseController {
                     expires_in: "36000",
                     token_type: "bearer",
                 };
-                response.json({ data: { user, token } });
+                if (user && info_user) {
+                    response.json({ data: { user, token } });
+                }
             }
             else {
                 next(new notFound_1.default());

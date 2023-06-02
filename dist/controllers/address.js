@@ -41,12 +41,46 @@ class addressController extends base_1.BaseController {
                 next(new notFound_1.default());
             }
         };
+        this.getAddress = async (request, response, next) => {
+            const ward_id = Number.parseInt(request.params.ward_id);
+            const ward = await this.prisma.ward.findUnique({
+                where: {
+                    id: ward_id,
+                },
+            });
+            const district = await this.prisma.district.findUnique({
+                where: {
+                    id: ward === null || ward === void 0 ? void 0 : ward.district_id,
+                },
+            });
+            const wards = await this.prisma.ward.findMany({
+                where: { district_id: district === null || district === void 0 ? void 0 : district.id },
+            });
+            // const provinces = await this.prisma.province.findMany({});
+            const province = await this.prisma.province.findUnique({
+                where: {
+                    id: district === null || district === void 0 ? void 0 : district.province_id,
+                },
+            });
+            const districts = await this.prisma.district.findMany({
+                where: { province_id: province === null || province === void 0 ? void 0 : province.id },
+            });
+            const data = {
+                ward: ward === null || ward === void 0 ? void 0 : ward.id,
+                wards,
+                district: district === null || district === void 0 ? void 0 : district.id,
+                districts,
+                province: province === null || province === void 0 ? void 0 : province.id,
+            };
+            response.json(data);
+        };
         this.initializeRoutes();
     }
     initializeRoutes() {
         this.router.get(this.path + "/province", this.getAllProvinces);
         this.router.get(this.path + "/district/:id", this.getDistrictByProvinceId);
         this.router.get(this.path + "/ward/:id", this.getWardByDistrictId);
+        this.router.get(this.path + "/address/:ward_id", this.getAddress);
     }
 }
 exports.default = addressController;

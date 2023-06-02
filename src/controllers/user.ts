@@ -100,9 +100,10 @@ export default class authController extends BaseController {
         reqBody.password,
         Number.parseInt(process.env.SALT_ROUNDS),
       );
-      console.log(hashPassword);
+
       const address =
         ward?.name + ", " + district?.name + ", " + province?.name;
+
       const user = await this.prisma.users.create({
         data: {
           password: hashPassword,
@@ -110,6 +111,23 @@ export default class authController extends BaseController {
           full_name: reqBody.full_name,
           organization: reqBody.organization,
           date_of_birth: new Date(reqBody.date_of_birth),
+          identity_card: reqBody.identity_card,
+          identity_card_date: new Date(reqBody.identity_card_date),
+          identity_card_address: reqBody.identity_card_address,
+          phone_number: reqBody.phone_number,
+          fax: reqBody.fax,
+          website: reqBody.website,
+          ward: reqBody.ward,
+          address,
+        },
+      });
+
+      const info_user = await this.prisma.info_user.create({
+        data: {
+          id_user: user.id,
+          email: reqBody.email,
+          full_name: reqBody.full_name,
+          organization: reqBody.organization,
           identity_card: reqBody.identity_card,
           identity_card_date: new Date(reqBody.identity_card_date),
           identity_card_address: reqBody.identity_card_address,
@@ -132,7 +150,9 @@ export default class authController extends BaseController {
         token_type: "bearer",
       };
 
-      response.json({ data: { user, token } });
+      if (user && info_user) {
+        response.json({ data: { user, token } });
+      }
     } else {
       next(new NotFoundException());
     }

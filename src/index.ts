@@ -11,6 +11,8 @@ import authController from "./controllers/auth";
 import fieldsController from "./controllers/fields";
 import organizationController from "./controllers/organizations";
 import proceduresController from "./controllers/procedures";
+import FilesController from "./controllers/files";
+import adminFilesController from "./controllers/admin/files";
 
 dotenv.config();
 
@@ -28,6 +30,8 @@ const app = new App(
     new adminFieldsController(),
     new adminProcedureController(),
     new adminGroupsController(),
+    new FilesController(),
+    new adminFilesController(),
   ],
   port,
 );

@@ -16,6 +16,8 @@ const auth_2 = __importDefault(require("./controllers/auth"));
 const fields_2 = __importDefault(require("./controllers/fields"));
 const organizations_2 = __importDefault(require("./controllers/organizations"));
 const procedures_2 = __importDefault(require("./controllers/procedures"));
+const files_1 = __importDefault(require("./controllers/files"));
+const files_2 = __importDefault(require("./controllers/admin/files"));
 dotenv_1.default.config();
 const port = process.env.PORT || 3000;
 const app = new app_1.default([
@@ -30,5 +32,7 @@ const app = new app_1.default([
     new fields_1.default(),
     new procedures_1.default(),
     new groups_1.default(),
+    new files_1.default(),
+    new files_2.default(),
 ], port);
 app.listen();

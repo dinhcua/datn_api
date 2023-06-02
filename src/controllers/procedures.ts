@@ -15,6 +15,7 @@ export default class proceduresController extends BaseController {
     this.router.get(this.path + "/get/:id", this.getProcedureById);
     this.router.get(this.path + "/get-by-key/:key", this.getProcedureByKey);
   }
+
   getAllProcedures = async (
     request: express.Request,
     response: express.Response,
@@ -64,6 +65,7 @@ export default class proceduresController extends BaseController {
       const totalProcedures = await (
         await this.prisma.procedures.findMany({ where })
       ).length;
+
       const procedures = await this.prisma.procedures.findMany({
         where,
         skip,

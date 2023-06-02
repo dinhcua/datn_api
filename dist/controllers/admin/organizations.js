@@ -70,10 +70,22 @@ class adminOrganizationController extends base_1.BaseController {
                     id: organization_id,
                 },
             });
+            const organization_field = await this.prisma.organization_field.findFirst({
+                where: {
+                    id_organization: organization_id,
+                },
+            });
+            const fields = await this.prisma.fields.findMany({
+                where: { id: organization_field === null || organization_field === void 0 ? void 0 : organization_field.id_field },
+            });
+            const data = {
+                ...organization,
+                fields,
+            };
             if (organization) {
                 response.json({
                     success: true,
-                    data: organization,
+                    data,
                     message: "Thao tác thành công",
                 });
             }
@@ -136,6 +148,55 @@ class adminOrganizationController extends base_1.BaseController {
                 next(new notFound_1.default());
             }
         };
+        this.editOrganizationById = async (request, response, next) => {
+            const reqBody = request.body;
+            const organization_id = Number.parseInt(reqBody.id);
+            const editOrganizationData = {
+                id: organization_id,
+                key: reqBody.key,
+                name: reqBody.name,
+            };
+            const updateOrganization = await this.prisma.organizations.update({
+                where: {
+                    id: organization_id,
+                },
+                data: {
+                    ...editOrganizationData,
+                },
+            });
+            if (!updateOrganization) {
+                next(new notFound_1.default());
+            }
+            const updateOrgField = await this.prisma.organization_field.updateMany({
+                where: {
+                    id_organization: organization_id,
+                },
+                data: {
+                    id_field: reqBody.fields[0],
+                },
+            });
+            if (updateOrgField) {
+                response.json({
+                    success: true,
+                    message: "Thao tác thành công",
+                });
+            }
+            else {
+                next(new notFound_1.default());
+            }
+        };
+        this.updateOrganization = async (request, response, next) => {
+            const reqBody = request.body;
+            const addOrganizations = await this.prisma.organizations.create({
+                data: {
+                    key: reqBody.key,
+                    name: reqBody.name,
+                },
+            });
+            if (addOrganizations) {
+                response.json({ success: "true", message: "Thanh cong" });
+            }
+        };
         this.initializeRoutes();
     }
     initializeRoutes() {
@@ -143,6 +204,8 @@ class adminOrganizationController extends base_1.BaseController {
         this.router.get(this.path + "/get/:id", this.getOrganizationById);
         this.router.get(this.path + "/get-group-fields", this.getGroupFields);
         this.router.get(this.path + "/get-groups", this.getGroups);
+        this.router.put(this.path + "/edit", this.editOrganizationById);
+        this.router.post(this.path + "/add", this.updateOrganization);
     }
 }
 exports.default = adminOrganizationController;

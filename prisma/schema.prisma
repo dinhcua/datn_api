@@ -39,6 +39,7 @@ model users {
   email           String      @unique
   password        String
   full_name       String
+  id_organization   Int?
   organization    String?
   date_of_birth   DateTime
   identity_card   String      @unique
@@ -50,14 +51,20 @@ model users {
   ward      String
   address     String
   role    Int @default(0)
+  isTrash    Boolean @default(false)
   remember_token      String?
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
+  deleted_at      DateTime?
   files files[]
+  info_user     info_user[]
 }
 
 model info_user {
   id              Int         @id @default(autoincrement())
+  users      users   @relation(fields: [id_user], references: [id])
+  id_user         Int
+  id_organization   Int?
   full_name       String
   phone_number    String
   email           String?
@@ -69,6 +76,10 @@ model info_user {
   website   String?
   ward      String?
   address   String?
+  isTrash    Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  deleted_at      DateTime?
   files     files[]
 }
 
@@ -76,6 +87,7 @@ model organization_field {
   id        Int         @id @default(autoincrement())
   organizations   organizations  @relation(fields: [id_organization], references: [id])
   id_organization   Int
+  isTrash    Boolean @default(false)
   fields  fields   @relation(fields: [id_field], references: [id])
   id_field  Int
 }
@@ -85,6 +97,7 @@ model fields {
   key     String
   name    String
   description   String?
+  isTrash    Boolean @default(false)
   organization_field   organization_field[]
   procedures      procedures[]
 }
@@ -93,6 +106,10 @@ model organizations {
   id      Int         @id @default(autoincrement())
   key     String      @unique
   name     String
+  isTrash    Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  deleted_at      DateTime?
   organization_field    organization_field[]
   groups      groups[]
 }
@@ -103,7 +120,12 @@ model groups {
   organizations   organizations  @relation(fields: [id_organization], references: [id])
   id_organization   Int 
   name      String
+  members    String?
   note      String?
+  isTrash    Boolean @default(false)
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  deleted_at      DateTime?
   procedure_steps       procedure_steps[]
   files       files[]
 }
@@ -114,7 +136,7 @@ model procedures {
   fields  fields   @relation(fields: [id_field], references: [id])
   id_field  Int
   name    String
-  thanh_phan_ho_so    String
+  thanh_phan_ho_so    String[]
   cach_thuc_thuc_hien   String?
   doi_tuong_thuc_hien     String?
   trinh_tu_thuc_hien      String?
@@ -125,18 +147,22 @@ model procedures {
   can_cu_phap_ly      String?
   ket_qua_thuc_hien     String?
   level   Int @default(0)
+  note  String?
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
   deleted_at      DateTime?
+  isTrash    Boolean @default(false)
   procedure_fs      procedure_fs[]
   files     files[]
   procedure_options procedure_options[]
+  procedure_steps procedure_steps[]
 }
 
 model templates {
   id      Int         @id @default(autoincrement())
   name    String
   data    String
+  isTrash    Boolean @default(false)
   procedure_options   procedure_options[]
 }
 
@@ -149,6 +175,9 @@ model procedure_options {
   id_template     Int
   name      String
   processing_time   Int
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  deleted_at      DateTime?
   procedure_steps   procedure_steps[]
 }
 
@@ -159,9 +188,14 @@ model procedure_steps {
   procedure_options    procedure_options @relation(fields: [id_option], references: [id])
   id_option     Int
   groups    groups @relation(fields: [id_group], references: [id])
+  procedures   procedures @relation(fields: [id_procedure], references: [id])
+  id_procedure Int
   id_group    Int
   name    String
   note    String?
+  created_at      DateTime @default(now())
+  updated_at    DateTime @default(now())
+  deleted_at      DateTime?
   order    Int @default(0)
   files   files[]
 } 
@@ -181,9 +215,10 @@ model files {
   id_info_user    Int
   access_key    String?
   processing_time   Int
-  data_template     String
+  data_template     String[]
   data        String
   status    Int @default(0)
+  current_step   Int @default(0)
   accepted_at     DateTime?
   finished_at     DateTime?
   created_at      DateTime @default(now())
@@ -206,4 +241,3 @@ model procedure_fs {
   file_storage  file_storage   @relation(fields: [id_fs], references: [id])
   id_fs     Int
 }
-
