@@ -98,11 +98,11 @@ class App {
     });
     const upload = multer({ storage });
 
-    this.app.post(
-      "/api/files/submit",
-      upload.single("file"),
-      this.handleUploadFile,
-    );
+    // this.app.post(
+    //   "/api/files/submit",
+    //   upload.single("file"),
+    //   this.handleUploadFile,
+    // );
 
     this.app.get("/seeding", seeding);
 

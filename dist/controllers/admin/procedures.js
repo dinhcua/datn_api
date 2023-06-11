@@ -5,8 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const notFound_1 = __importDefault(require("../../exceptions/notFound"));
 const base_1 = require("../abstractions/base");
-const docx_1 = require("docx");
-const fs = require("fs");
 class adminProcedureController extends base_1.BaseController {
     constructor() {
         super();
@@ -71,169 +69,14 @@ class adminProcedureController extends base_1.BaseController {
         };
         this.addProcedure = async (request, response, next) => {
             const reqBody = request.body;
-            // const thanh_phan_ho_so = reqBody.thanh_phan_ho_so;
-            const thanh_phan_ho_so = reqBody.thanh_phan_ho_so.map((thanh_phan, index) => new docx_1.Paragraph({
-                children: [
-                    new docx_1.TextRun({
-                        text: `${index + 1}. ${thanh_phan.toLowerCase()}............................................................................`,
-                    }),
-                ],
-            }));
-            // Create a new Document instance
-            const doc = new docx_1.Document({
-                sections: [
-                    {
-                        properties: {},
-                        children: [
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
-                                        bold: true,
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.CENTER,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "Độc lập - Tự do - Hạnh phúc",
-                                        bold: true,
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.CENTER,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "Quảng Ninh, ngày... tháng ... năm 202...",
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.RIGHT,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: `${reqBody.name}`,
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.CENTER,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "-----------------------------------",
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.CENTER,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: `Kính gửi: ${reqBody.ten_co_quan} `,
-                                        bold: true,
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.CENTER,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "- Tên cơ quan, tổ chức, đơn vị :.....................................................................",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "- Địa chỉ:.......................................................... Số điện thoại:.......................",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "- Số Fax/Email:..............................................................................................",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "Xin phép tổ chức họp báo với các thông tin như sau:",
-                                    }),
-                                ],
-                            }),
-                            ...thanh_phan_ho_so,
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: `${reqBody.note}`,
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "",
-                                    }),
-                                ],
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "Người đứng đầu cơ quan, tổ chức, đơn vị",
-                                        bold: true,
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.RIGHT,
-                            }),
-                            new docx_1.Paragraph({
-                                children: [
-                                    new docx_1.TextRun({
-                                        text: "(ký, đóng dấu, ghi rõ họ tên)",
-                                    }),
-                                ],
-                                alignment: docx_1.AlignmentType.RIGHT,
-                            }),
-                        ],
-                    },
-                ],
-            });
-            // Save the generated document to a file
-            const outputPath = "output.docx";
-            docx_1.Packer.toBuffer(doc).then((buffer) => {
-                fs.writeFileSync(outputPath, buffer);
-                console.log("Document generated successfully!");
-            });
+            const thanh_phan_ho_so = reqBody.thanh_phan_ho_so;
             const procedure = await this.prisma.procedures.createMany({
                 data: {
                     id: Math.floor(Math.random() * 1000),
                     key: reqBody.key,
                     id_field: Number.parseInt(reqBody.id_field),
                     name: reqBody.name,
-                    thanh_phan_ho_so: "",
+                    thanh_phan_ho_so,
                     cach_thuc_thuc_hien: reqBody.cach_thuc_thuc_hien,
                     doi_tuong_thuc_hien: reqBody.doi_tuong_thuc_hien,
                     trinh_tu_thuc_hien: reqBody.trinh_tu_thuc_hien,
@@ -243,7 +86,8 @@ class adminProcedureController extends base_1.BaseController {
                     yeu_cau_dieu_kien: reqBody.yeu_cau_dieu_kien,
                     can_cu_phap_ly: reqBody.can_cu_phap_ly,
                     ket_qua_thuc_hien: reqBody.ket_qua_thuc_hien,
-                    level: Number.parseInt(reqBody.level),
+                    note: reqBody.note,
+                    level: 0,
                 },
             });
             const result = {

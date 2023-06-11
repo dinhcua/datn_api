@@ -62,18 +62,47 @@ export default class authController extends BaseController {
   ) => {
     const reqBody = request.body;
 
-    const checkInit = await this.prisma.users.findMany({
+    const checkValidEmail = await this.prisma.users.findFirst({
       where: {
-        OR: [
-          { email: reqBody.email },
-          { phone_number: reqBody.phone_number },
-          { identity_card: reqBody.identity_card },
-        ],
+        email: reqBody.email,
       },
     });
 
+    if (checkValidEmail) {
+      console.log("Email đã tồn tại");
+
+      response.json({ success: false, message: "Email đã tồn tại" });
+      return;
+    }
+
+    const checkValidPhoneNumber = await this.prisma.users.findFirst({
+      where: {
+        phone_number: reqBody.phone_number,
+      },
+    });
+    if (checkValidPhoneNumber) {
+      console.log("Số điện thoại đã tồn tại");
+
+      response.json({ success: false, message: "Số điện thoại đã tồn tại" });
+      return;
+    }
+
+    const checkIdentityCard = await this.prisma.users.findFirst({
+      where: {
+        identity_card: reqBody.identity_card,
+      },
+    });
+    if (checkIdentityCard) {
+      console.log("Số CCCD/CMT đã tồn tại");
+
+      response.json({ success: false, message: "Số CCCD/CMT đã tồn tại" });
+      return;
+    }
+
     if (
-      !checkInit.length &&
+      !checkIdentityCard &&
+      !checkValidEmail &&
+      !checkValidPhoneNumber &&
       process.env.JWT_SECRET &&
       process.env.SALT_ROUNDS
     ) {
@@ -148,7 +177,7 @@ export default class authController extends BaseController {
       };
 
       if (user && info_user) {
-        response.json({ data: { user, token } });
+        response.json({ data: { user, info_user, token }, success: true });
       }
     } else {
       next(new NotFoundException());

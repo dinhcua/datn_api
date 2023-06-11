@@ -39,7 +39,7 @@ model users {
   email           String      @unique
   password        String
   full_name       String
-  id_organization   Int?
+  id_group   Int?
   organization    String?
   date_of_birth   DateTime
   identity_card   String      @unique
@@ -51,7 +51,6 @@ model users {
   ward      String
   address     String
   role    Int @default(0)
-  isTrash    Boolean @default(false)
   remember_token      String?
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
@@ -76,7 +75,6 @@ model info_user {
   website   String?
   ward      String?
   address   String?
-  isTrash    Boolean @default(false)
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
   deleted_at      DateTime?
@@ -87,7 +85,6 @@ model organization_field {
   id        Int         @id @default(autoincrement())
   organizations   organizations  @relation(fields: [id_organization], references: [id])
   id_organization   Int
-  isTrash    Boolean @default(false)
   fields  fields   @relation(fields: [id_field], references: [id])
   id_field  Int
 }
@@ -97,7 +94,6 @@ model fields {
   key     String
   name    String
   description   String?
-  isTrash    Boolean @default(false)
   organization_field   organization_field[]
   procedures      procedures[]
 }
@@ -106,7 +102,6 @@ model organizations {
   id      Int         @id @default(autoincrement())
   key     String      @unique
   name     String
-  isTrash    Boolean @default(false)
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
   deleted_at      DateTime?
@@ -122,7 +117,6 @@ model groups {
   name      String
   members    String?
   note      String?
-  isTrash    Boolean @default(false)
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
   deleted_at      DateTime?
@@ -151,7 +145,6 @@ model procedures {
   created_at      DateTime @default(now())
   updated_at    DateTime @default(now())
   deleted_at      DateTime?
-  isTrash    Boolean @default(false)
   procedure_fs      procedure_fs[]
   files     files[]
   procedure_options procedure_options[]
@@ -162,7 +155,6 @@ model templates {
   id      Int         @id @default(autoincrement())
   name    String
   data    String
-  isTrash    Boolean @default(false)
   procedure_options   procedure_options[]
 }
 
@@ -215,10 +207,10 @@ model files {
   id_info_user    Int
   access_key    String?
   processing_time   Int
-  data_template     String[]
-  data        String
+  data_template     String?
+  data        String[]?
   status    Int @default(0)
-  current_step   Int @default(0)
+  current_step   Int @default(1)
   accepted_at     DateTime?
   finished_at     DateTime?
   created_at      DateTime @default(now())

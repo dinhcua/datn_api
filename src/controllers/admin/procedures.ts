@@ -1,9 +1,6 @@
 import express from "express";
 import NotFoundException from "../../exceptions/notFound";
 import { BaseController } from "../abstractions/base";
-import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
-
-const fs = require("fs");
 export default class adminProcedureController extends BaseController {
   public path = "/api/admin/procedures";
 
@@ -127,171 +124,7 @@ export default class adminProcedureController extends BaseController {
   ) => {
     const reqBody = request.body;
 
-    // const thanh_phan_ho_so = reqBody.thanh_phan_ho_so;
-
-    const thanh_phan_ho_so = reqBody.thanh_phan_ho_so.map(
-      (thanh_phan: string, index: number) =>
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${
-                index + 1
-              }. ${thanh_phan.toLowerCase()}............................................................................`,
-            }),
-          ],
-        }),
-    );
-
-    // Create a new Document instance
-
-    const doc = new Document({
-      sections: [
-        {
-          properties: {},
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
-                  bold: true,
-                }),
-              ],
-              alignment: AlignmentType.CENTER,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Độc lập - Tự do - Hạnh phúc",
-                  bold: true,
-                }),
-              ],
-              alignment: AlignmentType.CENTER,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Quảng Ninh, ngày... tháng ... năm 202...",
-                }),
-              ],
-              alignment: AlignmentType.RIGHT,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${reqBody.name}`,
-                }),
-              ],
-              alignment: AlignmentType.CENTER,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "-----------------------------------",
-                }),
-              ],
-              alignment: AlignmentType.CENTER,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `Kính gửi: ${reqBody.ten_co_quan} `,
-                  bold: true,
-                }),
-              ],
-              alignment: AlignmentType.CENTER,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "- Tên cơ quan, tổ chức, đơn vị :.....................................................................",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "- Địa chỉ:.......................................................... Số điện thoại:.......................",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "- Số Fax/Email:..............................................................................................",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Xin phép tổ chức họp báo với các thông tin như sau:",
-                }),
-              ],
-            }),
-            ...thanh_phan_ho_so,
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${reqBody.note}`,
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "",
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Người đứng đầu cơ quan, tổ chức, đơn vị",
-                  bold: true,
-                }),
-              ],
-              alignment: AlignmentType.RIGHT,
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "(ký, đóng dấu, ghi rõ họ tên)",
-                }),
-              ],
-              alignment: AlignmentType.RIGHT,
-            }),
-          ],
-        },
-      ],
-    });
-
-    // Save the generated document to a file
-    const outputPath = "output.docx";
-    Packer.toBuffer(doc).then((buffer) => {
-      fs.writeFileSync(outputPath, buffer);
-      console.log("Document generated successfully!");
-    });
+    const thanh_phan_ho_so = reqBody.thanh_phan_ho_so;
 
     const procedure = await this.prisma.procedures.createMany({
       data: {
@@ -299,7 +132,7 @@ export default class adminProcedureController extends BaseController {
         key: reqBody.key,
         id_field: Number.parseInt(reqBody.id_field),
         name: reqBody.name,
-        thanh_phan_ho_so: "",
+        thanh_phan_ho_so,
         cach_thuc_thuc_hien: reqBody.cach_thuc_thuc_hien,
         doi_tuong_thuc_hien: reqBody.doi_tuong_thuc_hien,
         trinh_tu_thuc_hien: reqBody.trinh_tu_thuc_hien,
@@ -309,7 +142,8 @@ export default class adminProcedureController extends BaseController {
         yeu_cau_dieu_kien: reqBody.yeu_cau_dieu_kien,
         can_cu_phap_ly: reqBody.can_cu_phap_ly,
         ket_qua_thuc_hien: reqBody.ket_qua_thuc_hien,
-        level: Number.parseInt(reqBody.level),
+        note: reqBody.note,
+        level: 0,
       },
     });
 

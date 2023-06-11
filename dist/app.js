@@ -83,7 +83,11 @@ class App {
             },
         });
         const upload = (0, multer_1.default)({ storage });
-        this.app.post("/api/files/submit", upload.single("file"), this.handleUploadFile);
+        // this.app.post(
+        //   "/api/files/submit",
+        //   upload.single("file"),
+        //   this.handleUploadFile,
+        // );
         this.app.get("/seeding", seeding_1.seeding);
         controllers.forEach((controller) => {
             this.app.use("/", controller.router);
