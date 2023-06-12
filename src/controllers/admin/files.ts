@@ -148,7 +148,7 @@ export default class adminFilesController extends BaseController {
     const isFinish = current_step?.order === totalProcedureSteps;
 
     if (isFinish) {
-      const thanh_phan_ho_so_docx = current_procedure.thanh_phan_ho_so.map(
+      const thanh_phan_ho_so_docx = [current_procedure.thanh_phan_ho_so].map(
         (thanh_phan: string, index: number) =>
           new Paragraph({
             children: [

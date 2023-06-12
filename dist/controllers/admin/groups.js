@@ -29,7 +29,7 @@ class adminGroupsController extends base_1.BaseController {
                         where: {
                             role: 1,
                             organization: field.name,
-                            id_group: field.id,
+                            id_organization: field.id,
                         },
                     });
                     return { ...field, organization, users };

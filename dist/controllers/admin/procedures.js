@@ -86,14 +86,14 @@ class adminProcedureController extends base_1.BaseController {
                     yeu_cau_dieu_kien: reqBody.yeu_cau_dieu_kien,
                     can_cu_phap_ly: reqBody.can_cu_phap_ly,
                     ket_qua_thuc_hien: reqBody.ket_qua_thuc_hien,
-                    note: reqBody.note,
+                    // note: reqBody.note,
                     level: 0,
                 },
             });
             const result = {
                 data: procedure,
                 success: false,
-                message: "Thao tac thanh cong",
+                message: "Thêm thủ tục thành công",
             };
             if (procedure) {
                 response.json(result);
@@ -115,7 +115,7 @@ class adminProcedureController extends base_1.BaseController {
                 ],
             });
             if (addProcedureOption) {
-                response.json({ success: true, message: "Thanh công" });
+                response.json({ success: true, message: "Thành công" });
             }
         };
         this.getOptionByProcedureId = async (request, response, next) => {

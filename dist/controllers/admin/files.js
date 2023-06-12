@@ -98,7 +98,7 @@ class adminFilesController extends base_1.BaseController {
             const current_step = procedureSteps.find((step) => step.id === current_file.id_step);
             const isFinish = (current_step === null || current_step === void 0 ? void 0 : current_step.order) === totalProcedureSteps;
             if (isFinish) {
-                const thanh_phan_ho_so_docx = current_procedure.thanh_phan_ho_so.map((thanh_phan, index) => new docx_1.Paragraph({
+                const thanh_phan_ho_so_docx = [current_procedure.thanh_phan_ho_so].map((thanh_phan, index) => new docx_1.Paragraph({
                     children: [
                         new docx_1.TextRun({
                             text: `${index + 1}. ${thanh_phan.toLowerCase()}: ${current_file.data_template[index]}`,

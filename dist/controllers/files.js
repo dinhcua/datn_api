@@ -213,7 +213,7 @@ class FilesController extends base_1.BaseController {
             const data = await Promise.all(stepsFinished.map(async (step) => {
                 const user = await this.prisma.users.findFirst({
                     where: {
-                        id_group: step.id_group,
+                        id_organization: step.id_group,
                     },
                 });
                 return { step: { ...step }, user };
