@@ -46,7 +46,7 @@ export default class adminGroupsController extends BaseController {
             where: {
               role: 1,
               organization: field.name,
-              id_organization: field.id,
+              // id_organization: field.id,
             },
           });
 
@@ -99,7 +99,7 @@ export default class adminGroupsController extends BaseController {
         where: {
           role: 1,
           organization: group?.name,
-          id_organization: group_id,
+          // id_organization: group_id,
         },
       });
 
@@ -122,7 +122,7 @@ export default class adminGroupsController extends BaseController {
   ) => {
     const reqBody = request.body;
 
-    const addGroup = await this.prisma.groups.create({
+    const addedGroup = await this.prisma.groups.create({
       data: {
         id_organization: Number.parseInt(reqBody.id_organization),
         name: reqBody.name,
@@ -130,7 +130,7 @@ export default class adminGroupsController extends BaseController {
       },
     });
 
-    if (addGroup) {
+    if (addedGroup) {
       response.json({ success: "true", message: "Thanh cong" });
     }
   };
@@ -161,7 +161,7 @@ export default class adminGroupsController extends BaseController {
             id: Number.parseInt(id_user),
           },
           data: {
-            id_organization: Number.parseInt(reqBody.id),
+            // id_organization: Number.parseInt(reqBody.id),
             organization: reqBody.name,
           },
         });

@@ -33,20 +33,22 @@ export default class adminFilesController extends BaseController {
     const req = request.query;
     //{ id_group: '2', id_user: '3', page: '1', perPage: '10', q: '' }
 
-    // console.log(req.status, req.id_group);
+    // console.log(request);
+
     if (typeof req.id_group === "string") {
+      // console.log("id_group", req.id_group);
       const id_group = Number.parseInt(req.id_group);
 
-      const procedure_steps = await this.prisma.procedure_steps.findMany({
-        where: { id_group },
-      });
+      // const procedure_steps = await this.prisma.procedure_steps.findMany({
+      //   where: { id_group },
+      // });
 
-      const step_ids = procedure_steps.map((step) => step.id);
+      // const step_ids = procedure_steps.map((step) => step.id);
 
       const where =
         typeof req.status === "string"
-          ? { id_step: { in: step_ids }, status: Number.parseInt(req.status) }
-          : { id_step: { in: step_ids }, OR: [{ status: 0 }, { status: 1 }] };
+          ? { id_option: id_group, status: Number.parseInt(req.status) }
+          : { id_option: id_group, OR: [{ status: 0 }, { status: 1 }] };
 
       const files = await this.prisma.files.findMany({
         where,
@@ -139,6 +141,7 @@ export default class adminFilesController extends BaseController {
         id_procedure: current_file.id_procedure,
       },
     });
+
     const totalProcedureSteps = procedureSteps.length;
 
     const current_step = procedureSteps.find(
@@ -147,197 +150,200 @@ export default class adminFilesController extends BaseController {
 
     const isFinish = current_step?.order === totalProcedureSteps;
 
-    if (isFinish) {
-      const thanh_phan_ho_so_docx = [current_procedure.thanh_phan_ho_so].map(
-        (thanh_phan: string, index: number) =>
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `${index + 1}. ${thanh_phan.toLowerCase()}: ${
-                  current_file.data_template[index]
-                }`,
-              }),
-            ],
-          }),
-      );
+    // if (isFinish) {
+    //   const thanh_phan_ho_so_docx = [current_procedure.thanh_phan_ho_so].map(
+    //     (thanh_phan: any, index: number) =>
+    //       new Paragraph({
+    //         children: [
+    //           new TextRun({
+    //             text: `${index + 1}. ${thanh_phan.toLowerCase()}: ${
+    //               current_file.data_template
+    //                 ? current_file.data_template[index]
+    //                 : ""
+    //             }`,
+    //           }),
+    //         ],
+    //       }),
+    //   );
 
-      const date = new Date(reqBody.file.file_create_day);
-      const day = date.getDate(); // Get the day (1-31)
-      const month = date.getMonth() + 1; // Get the month (0-11, adding 1 to match the standard 1-12)
-      const year = date.getFullYear(); // Get the four-digit year
+    //   const date = new Date(reqBody.file.file_create_day);
+    //   const day = date.getDate(); // Get the day (1-31)
+    //   const month = date.getMonth() + 1; // Get the month (0-11, adding 1 to match the standard 1-12)
+    //   const year = date.getFullYear(); // Get the four-digit year
 
-      const doc = new Document({
-        sections: [
-          {
-            properties: {},
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
-                    bold: true,
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Độc lập - Tự do - Hạnh phúc",
-                    bold: true,
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `Quảng Ninh, ngày ${day}  tháng ${month} năm ${year}.`,
-                  }),
-                ],
-                alignment: AlignmentType.RIGHT,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `${reqBody.procedure.name}`,
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "-----------------------------------",
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `Kính gửi: ${reqBody.procedure.first_organization.name}`,
-                    bold: true,
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `${reqBody.procedure.field.name}`,
-                    bold: true,
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "",
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `- Tên cơ quan, tổ chức, đơn vị : ${reqBody.user.full_name}..........................`,
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `- Địa chỉ: ${reqBody.user.address}...... Số điện thoại: ${reqBody.user.phone_number}......`,
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `- Số Fax/Email: ${reqBody.user.email} ................................................................`,
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "",
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `${reqBody.procedure.name} với các thông tin như sau:`,
-                  }),
-                ],
-              }),
-              ...thanh_phan_ho_so_docx,
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "",
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `${reqBody.procedure.note}`,
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "",
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Người đứng đầu cơ quan, tổ chức, đơn vị",
-                    bold: true,
-                  }),
-                ],
-                alignment: AlignmentType.RIGHT,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "(ký, đóng dấu, ghi rõ họ tên)",
-                  }),
-                ],
-                alignment: AlignmentType.RIGHT,
-              }),
-              new Paragraph({
-                children: [
-                  new ImageRun({
-                    data: fs.readFileSync("passed.png"),
-                    transformation: {
-                      width: 150,
-                      height: 150,
-                    },
-                  }),
-                ],
-                alignment: AlignmentType.RIGHT,
-              }),
-            ],
-          },
-        ],
-      });
-      const outputPath = `uploads/${current_file.id_user}/${current_file.id}/${current_procedure.name}.docx`;
-      Packer.toBuffer(doc).then((buffer) => {
-        fs.writeFileSync(outputPath, buffer);
-        console.log("Document generated successfully!");
-      });
-    }
+    //   const doc = new Document({
+    //     sections: [
+    //       {
+    //         properties: {},
+    //         children: [
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+    //                 bold: true,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.CENTER,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "Độc lập - Tự do - Hạnh phúc",
+    //                 bold: true,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.CENTER,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `Quảng Ninh, ngày ${day}  tháng ${month} năm ${year}.`,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.RIGHT,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `${reqBody.procedure.name}`,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.CENTER,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "-----------------------------------",
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.CENTER,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `Kính gửi: ${reqBody.procedure.first_organization.name}`,
+    //                 bold: true,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.CENTER,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `${reqBody.procedure.field.name}`,
+    //                 bold: true,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.CENTER,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "",
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `- Tên cơ quan, tổ chức, đơn vị : ${reqBody.user.full_name}..........................`,
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `- Địa chỉ: ${reqBody.user.address}...... Số điện thoại: ${reqBody.user.phone_number}......`,
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `- Số Fax/Email: ${reqBody.user.email} ................................................................`,
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "",
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `${reqBody.procedure.name} với các thông tin như sau:`,
+    //               }),
+    //             ],
+    //           }),
+    //           ...thanh_phan_ho_so_docx,
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "",
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: `${reqBody.procedure.note}`,
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "",
+    //               }),
+    //             ],
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "Người đứng đầu cơ quan, tổ chức, đơn vị",
+    //                 bold: true,
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.RIGHT,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new TextRun({
+    //                 text: "(ký, đóng dấu, ghi rõ họ tên)",
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.RIGHT,
+    //           }),
+    //           new Paragraph({
+    //             children: [
+    //               new ImageRun({
+    //                 data: fs.readFileSync("passed.png"),
+    //                 transformation: {
+    //                   width: 150,
+    //                   height: 150,
+    //                 },
+    //               }),
+    //             ],
+    //             alignment: AlignmentType.RIGHT,
+    //           }),
+    //         ],
+    //       },
+    //     ],
+    //   });
+    //   const outputPath = `uploads/${current_file.id_user}/${current_file.id}/${current_procedure.name}.docx`;
+    //   Packer.toBuffer(doc).then((buffer) => {
+    //     fs.writeFileSync(outputPath, buffer);
+    //     console.log("Document generated successfully!");
+    //   });
+    // }
     if (current_step?.order) {
       const nextStep = procedureSteps.find(
         (step) => step.order === current_step.order + 1,
       );
+      // console.log("nextStep", nextStep);
 
       const file = await this.prisma.files.update({
         where: {
@@ -347,6 +353,7 @@ export default class adminFilesController extends BaseController {
           id_step: nextStep?.id,
           current_step: current_step.order + 1,
           status: isFinish ? 2 : 1,
+          id_option: nextStep?.id_group,
         },
       });
       if (file) {

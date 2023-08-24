@@ -16,6 +16,7 @@ export default class adminUserController extends BaseController {
     this.router.get(this.path + "users/groups/:id_user", this.getUserGroups);
     this.router.get(this.path + "users/get/:id", this.getUserById);
     this.router.post(this.path + "users/add", this.register);
+    this.router.put(this.path + "users/edit", this.editUser);
   }
 
   getAllFields = async (
@@ -239,7 +240,7 @@ export default class adminUserController extends BaseController {
         token_type: "bearer",
       };
 
-      const info_user = await this.prisma.info_user.create({
+      await this.prisma.info_user.create({
         data: {
           id_user: user.id,
           email: reqBody.email,
@@ -265,6 +266,37 @@ export default class adminUserController extends BaseController {
       response.json(result);
     } else {
       next(new NotFoundException());
+    }
+  };
+
+  editUser = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const reqBody = request.body;
+    const userId = reqBody.id;
+    const updateUser = await this.prisma.users.update({
+      where: {
+        id: Number.parseInt(userId),
+      },
+      data: {
+        email: reqBody.email,
+        full_name: reqBody.full_name,
+        organization: reqBody.organization,
+        date_of_birth: new Date(reqBody.date_of_birth),
+        identity_card: reqBody.identity_card,
+        identity_card_date: new Date(reqBody.identity_card_date),
+        identity_card_address: reqBody.identity_card_address,
+        phone_number: reqBody.phone_number,
+        fax: reqBody.fax,
+        website: reqBody.website,
+        ward: reqBody.ward,
+        role: reqBody.role,
+      },
+    });
+    if (updateUser) {
+      response.json({ success: true, message: "Sửa tài khoản thành công" });
     }
   };
 }

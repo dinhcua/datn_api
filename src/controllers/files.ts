@@ -41,7 +41,6 @@ export default class FilesController extends BaseController {
               identity_card,
             },
           });
-          console.log("hhh");
 
           if (!user) return;
 
@@ -280,7 +279,8 @@ export default class FilesController extends BaseController {
       stepsFinished.map(async (step) => {
         const user = await this.prisma.users.findFirst({
           where: {
-            id_organization: step.id_group,
+            id_group: step.id_group,
+            // id_organization: step.id_group,
           },
         });
         return { step: { ...step }, user };
@@ -302,9 +302,12 @@ export default class FilesController extends BaseController {
 
     const reqBody = request.body;
 
-    const id_option = Number.parseInt(reqBody.option.id);
-    const thanh_phan_ho_so = [reqBody.procedure.thanh_phan_ho_so, "test"];
-    const data_template = reqBody.file.thanh_phan_ho_so;
+    const option = reqBody.option.steps.find((step: any) => {
+      return step.order === 1;
+    });
+
+    // const thanh_phan_ho_so = reqBody.procedure.thanh_phan_ho_so;
+    const data_thanh_phan_ho_so = reqBody.file.thanh_phan_ho_so;
 
     const steps = await this.prisma.procedure_steps.findMany({
       where: { id_procedure: reqBody.file.id_procedure },
@@ -318,20 +321,26 @@ export default class FilesController extends BaseController {
         id_user: reqBody.user.id,
       },
     });
+    // console.log(infoUser);
+
     if (!infoUser) return;
+    // console.log("reqBody", reqBody);
+
+    // console.log("reqBody.procedure.id", reqBody.procedure.id);
+
     const file = await this.prisma.files.create({
       data: {
         id_procedure: Number.parseInt(reqBody.procedure.id),
-        id_option,
+        id_option: option.id_group,
         id_user: reqBody.user.id,
-        id_step: current_step?.id,
+        id_step: option?.id,
         key,
         current_step: 1,
         id_info_user: infoUser.id,
         access_key,
         processing_time: reqBody.option.processing_time,
         data_template: "",
-        data: thanh_phan_ho_so[0],
+        data: data_thanh_phan_ho_so,
       },
     });
     if (file) {

@@ -200,6 +200,7 @@ model files {
   users   users @relation(fields: [id_user], references: [id])
   id_user Int
   groups   groups @relation(fields: [id_option], references: [id])
+  //id_option == id_group
   id_option Int
   procedure_steps procedure_steps @relation(fields: [id_step], references: [id])
   id_step     Int
@@ -208,7 +209,7 @@ model files {
   access_key    String?
   processing_time   Int
   data_template     String?
-  data        String[]?
+  data        String[]
   status    Int @default(0)
   current_step   Int @default(1)
   accepted_at     DateTime?

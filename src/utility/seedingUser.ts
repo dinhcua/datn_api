@@ -22,8 +22,6 @@ export const seedingUser = async () => {
       address: "Phường Phúc Xá, Quận Ba Đình, Thành phố Hà Nội",
       role: 2,
       remember_token: null,
-      id_organization: null,
-      isTrash: false,
     },
   ];
 
@@ -43,9 +41,9 @@ export const seedingUser = async () => {
       website: "",
       ward: "1",
       address: "Phường Phúc Xá, Quận Ba Đình, Thành phố Hà Nội",
-      id_organization: null,
+      // id_organization: null,
       id_user: 1,
-      isTrash: false,
+      // isTrash: false,
     },
   ];
 

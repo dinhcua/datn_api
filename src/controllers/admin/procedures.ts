@@ -14,6 +14,7 @@ export default class adminProcedureController extends BaseController {
     this.router.get(this.path + "/get/:id", this.getProcedureById);
     this.router.post(this.path + "/add", this.addProcedure);
     this.router.post(this.path + "/options/add", this.addProcedureOption);
+    this.router.put(this.path + "/options/edit", this.editProcedureOption);
     this.router.get(
       this.path + "/options/get/:id_procedure",
       this.getOptionByProcedureId,
@@ -149,7 +150,7 @@ export default class adminProcedureController extends BaseController {
 
     const result = {
       data: procedure,
-      success: false,
+      success: true,
       message: "Thêm thủ tục thành công",
     };
 
@@ -166,18 +167,37 @@ export default class adminProcedureController extends BaseController {
     next: express.NextFunction,
   ) => {
     const reqBody = request.body;
-    const addProcedureOption = await this.prisma.procedure_options.createMany({
-      data: [
-        {
-          id_procedure: Number.parseInt(reqBody.id_procedure),
-          id_template: 2,
-          name: reqBody.name,
-          processing_time: Number.parseInt(reqBody.processing_time),
-        },
-      ],
+    const addProcedureOption = await this.prisma.procedure_options.create({
+      data: {
+        id_procedure: Number.parseInt(reqBody.id_procedure),
+        id_template: 2,
+        name: reqBody.name,
+        processing_time: Number.parseInt(reqBody.processing_time),
+      },
     });
 
     if (addProcedureOption) {
+      response.json({ success: true, message: "Thành công" });
+    }
+  };
+
+  editProcedureOption = async (
+    request: express.Request,
+    response: express.Response,
+    next: express.NextFunction,
+  ) => {
+    const reqBody = request.body;
+    console.log(reqBody);
+
+    const editProcedureOption = await this.prisma.procedure_options.update({
+      where: { id: Number.parseInt(reqBody.id) },
+      data: {
+        name: reqBody.name,
+        processing_time: Number.parseInt(reqBody.processing_time),
+      },
+    });
+
+    if (editProcedureOption) {
       response.json({ success: true, message: "Thành công" });
     }
   };
