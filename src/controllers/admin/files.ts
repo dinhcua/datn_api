@@ -1,15 +1,8 @@
 import express from "express";
 import NotFoundException from "../../exceptions/notFound";
 import { BaseController } from "../abstractions/base";
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  AlignmentType,
-  ImageRun,
-} from "docx";
-import fs from "fs";
+import nodemailer from "nodemailer";
+
 export default class adminFilesController extends BaseController {
   public path = "/api/admin/files";
 
@@ -149,6 +142,32 @@ export default class adminFilesController extends BaseController {
     );
 
     const isFinish = current_step?.order === totalProcedureSteps;
+
+    if (isFinish) {
+      const transporter = nodemailer.createTransport({
+        // config mail server
+        service: "Gmail",
+        auth: {
+          user: "luongdinhcua2512@gmail.com",
+          pass: "Aa0966944309",
+        },
+      });
+
+      const mailOptions = {
+        from: "luongdinhcua2512@gmail.com",
+        to: "ldcua2512@gmail.com",
+        subject: "Test Email",
+        text: "Hello, this is a test email sent from Nodemailer with TypeScript!",
+      };
+
+      try {
+        // Gửi email
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Email sent:", info.response);
+      } catch (error) {
+        console.error("Error sending email:", error);
+      }
+    }
 
     // if (isFinish) {
     //   const thanh_phan_ho_so_docx = [current_procedure.thanh_phan_ho_so].map(

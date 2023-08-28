@@ -1,0 +1,155 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const notFound_1 = __importDefault(require("../exceptions/notFound"));
+const base_1 = require("./abstractions/base");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+class authController extends base_1.BaseController {
+    constructor() {
+        super();
+        this.path = "/api/auth";
+        this.login = async (request, response, next) => {
+            const { email, password } = request.body;
+            const user = await this.prisma.users.findUnique({
+                where: {
+                    email,
+                },
+            });
+            if (user && process.env.JWT_SECRET) {
+                const isMatch = await bcrypt_1.default.compareSync(password, user.password);
+                if (!isMatch) {
+                    return response.status(401).json({ message: "Invalid credentials" });
+                }
+                const payload = { user: { id: user.id } };
+                const generateToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
+                    expiresIn: "36000",
+                });
+                const token = {
+                    access_token: generateToken,
+                    expires_in: "36000",
+                    token_type: "bearer",
+                };
+                response.json({ data: { user, token } });
+            }
+            else {
+                next(new notFound_1.default());
+            }
+        };
+        this.register = async (request, response, next) => {
+            const reqBody = request.body;
+            const checkValidEmail = await this.prisma.users.findFirst({
+                where: {
+                    email: reqBody.email,
+                },
+            });
+            if (checkValidEmail) {
+                console.log("Email đã tồn tại");
+                response.json({ success: false, message: "Email đã tồn tại" });
+                return;
+            }
+            const checkValidPhoneNumber = await this.prisma.users.findFirst({
+                where: {
+                    phone_number: reqBody.phone_number,
+                },
+            });
+            if (checkValidPhoneNumber) {
+                console.log("Số điện thoại đã tồn tại");
+                response.json({ success: false, message: "Số điện thoại đã tồn tại" });
+                return;
+            }
+            const checkIdentityCard = await this.prisma.users.findFirst({
+                where: {
+                    identity_card: reqBody.identity_card,
+                },
+            });
+            if (checkIdentityCard) {
+                console.log("Số CCCD/CMT đã tồn tại");
+                response.json({ success: false, message: "Số CCCD/CMT đã tồn tại" });
+                return;
+            }
+            if (!checkIdentityCard &&
+                !checkValidEmail &&
+                !checkValidPhoneNumber &&
+                process.env.JWT_SECRET &&
+                process.env.SALT_ROUNDS) {
+                const province = (await this.prisma.province.findUnique({
+                    where: {
+                        id: +reqBody.province,
+                    },
+                })) || { name: "" };
+                const district = (await this.prisma.district.findUnique({
+                    where: {
+                        id: +reqBody.district,
+                    },
+                })) || { name: "" };
+                const ward = (await this.prisma.ward.findUnique({
+                    where: {
+                        id: +reqBody.ward,
+                    },
+                })) || { name: "" };
+                const hashPassword = bcrypt_1.default.hashSync(reqBody.password, Number.parseInt(process.env.SALT_ROUNDS));
+                console.log(hashPassword);
+                const address = (ward === null || ward === void 0 ? void 0 : ward.name) + ", " + (district === null || district === void 0 ? void 0 : district.name) + ", " + (province === null || province === void 0 ? void 0 : province.name);
+                const user = await this.prisma.users.create({
+                    data: {
+                        password: hashPassword,
+                        email: reqBody.email,
+                        full_name: reqBody.full_name,
+                        organization: reqBody.organization,
+                        date_of_birth: new Date(reqBody.date_of_birth),
+                        identity_card: reqBody.identity_card,
+                        identity_card_date: new Date(reqBody.identity_card_date),
+                        identity_card_address: reqBody.identity_card_address,
+                        phone_number: reqBody.phone_number,
+                        fax: reqBody.fax,
+                        website: reqBody.website,
+                        ward: reqBody.ward,
+                        address,
+                    },
+                });
+                const info_user = await this.prisma.info_user.create({
+                    data: {
+                        id_user: user.id,
+                        email: reqBody.email,
+                        full_name: reqBody.full_name,
+                        organization: reqBody.organization,
+                        identity_card: reqBody.identity_card,
+                        identity_card_date: new Date(reqBody.identity_card_date),
+                        identity_card_address: reqBody.identity_card_address,
+                        phone_number: reqBody.phone_number,
+                        fax: reqBody.fax,
+                        website: reqBody.website,
+                        ward: reqBody.ward,
+                        address,
+                    },
+                });
+                const payload = { user: { id: user.id } };
+                const generateToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
+                    expiresIn: "36000",
+                });
+                const token = {
+                    access_token: generateToken,
+                    expires_in: "36000",
+                    token_type: "bearer",
+                };
+                if (user && info_user) {
+                    response.json({ data: { user, info_user, token }, success: true });
+                }
+            }
+            else {
+                next(new notFound_1.default());
+            }
+        };
+        this.initializeRoutes();
+    }
+    initializeRoutes() {
+        this.router.post(this.path + "/login", this.login);
+        this.router.post(this.path + "/register", this.register);
+    }
+}
+exports.default = authController;

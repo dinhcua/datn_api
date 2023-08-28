@@ -264,14 +264,21 @@ export default class FilesController extends BaseController {
 
     const file = await this.prisma.files.findUnique({ where: { id: id_file } });
 
+    const id_procedure = file?.id_procedure;
+
+    const procedure_option = await this.prisma.procedure_options.findFirst({
+      where: { id_procedure: id_procedure },
+    });
+
     const steps = await this.prisma.procedure_steps.findMany({
       where: {
-        id_option: 1,
+        id_option: procedure_option?.id,
       },
       orderBy: {
         order: "asc",
       },
     });
+    console.log("steps", steps);
 
     const stepsFinished = steps.slice(0, file?.current_step);
 
