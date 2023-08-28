@@ -1,21 +1,39 @@
--- CreateTable
-CREATE TABLE "info_user" (
-    "id" SERIAL NOT NULL,
-    "full_name" TEXT NOT NULL,
-    "phone_number" TEXT NOT NULL,
-    "email" TEXT,
-    "organization" TEXT,
-    "identity_card" TEXT,
-    "identity_card_date" TIMESTAMP(3),
-    "identity_card_address" TEXT NOT NULL,
-    "fax" TEXT,
-    "website" TEXT,
-    "ward" TEXT,
-    "address" TEXT,
+-- Tạo một vai trò có quyền SELECT trên bảng info_user
+CREATE ROLE readonly_role;
+GRANT SELECT ON info_user TO readonly_role;
 
-    CONSTRAINT "info_user_pkey" PRIMARY KEY ("id")
+-- Tạo người dùng và gán vai trò cho họ
+CREATE USER readonly_user WITH PASSWORD 'secure_password';
+GRANT readonly_user TO info_user;
+
+-- CreateTable
+-- Tạo bảng thông tin người dùng
+CREATE TABLE info_user (
+    id SERIAL NOT NULL PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    email TEXT,
+    organization TEXT,
+    identity_card TEXT,
+    identity_card_date TIMESTAMP(3),
+    identity_card_address TEXT NOT NULL,
+    fax TEXT,
+    website TEXT,
+    ward TEXT,
+    address TEXT
 );
 
+-- Tạo bảng dữ liệu nhạy cảm và sử dụng pgcrypto để mã hóa số thẻ tín dụng
+CREATE EXTENSION IF NOT EXISTS pgcrypto; -- Đảm bảo rằng pgcrypto đã được kích hoạt
+CREATE TABLE sensitive_data (
+    id SERIAL PRIMARY KEY,
+    credit_card_number TEXT, -- Cột dữ liệu mã hóa
+    name TEXT
+);
+
+-- Thêm mã hóa dữ liệu cho cột credit_card_number
+UPDATE sensitive_data
+SET credit_card_number = pgp_sym_encrypt('your_credit_card_number', 'your_encryption_key');
 -- CreateTable
 CREATE TABLE "organizations" (
     "id" SERIAL NOT NULL,
@@ -58,6 +76,21 @@ CREATE TABLE "procedures" (
 
     CONSTRAINT "procedures_pkey" PRIMARY KEY ("id")
 );
+
+-- Tạo bảng dữ liệu nhạy cảm và sử dụng pgcrypto để mã hóa số thẻ tín dụng
+CREATE EXTENSION IF NOT EXISTS pgcrypto; -- Đảm bảo rằng pgcrypto đã được kích hoạt
+CREATE TABLE sensitive_data (
+    id SERIAL PRIMARY KEY,
+    credit_card_number TEXT, -- Cột dữ liệu mã hóa
+    name TEXT
+);
+
+-- Thêm mã hóa dữ liệu cho cột credit_card_number
+UPDATE sensitive_data
+SET credit_card_number = pgp_sym_encrypt('your_credit_card_number', 'your_encryption_key');
+
+-- Tạo chỉ mục trên cột phone_number trong bảng info_user
+CREATE INDEX idx_phone_number ON info_user (phone_number);
 
 -- CreateTable
 CREATE TABLE "templates" (
