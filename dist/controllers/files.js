@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const base_1 = require("./abstractions/base");
 const notFound_1 = __importDefault(require("../exceptions/notFound"));
 const utility_1 = require("../utility");
+const sendGmail_1 = require("../utility/sendGmail");
+const sendSMS_1 = require("../utility/sendSMS");
 class FilesController extends base_1.BaseController {
     constructor() {
         super();
@@ -212,7 +214,7 @@ class FilesController extends base_1.BaseController {
                     order: "asc",
                 },
             });
-            console.log("steps", steps);
+            // console.log("steps", steps);
             const stepsFinished = steps.slice(0, file === null || file === void 0 ? void 0 : file.current_step);
             const data = await Promise.all(stepsFinished.map(async (step) => {
                 const user = await this.prisma.users.findFirst({
@@ -268,6 +270,16 @@ class FilesController extends base_1.BaseController {
                 },
             });
             if (file) {
+                const message = `Hồ sơ ${reqBody.procedure.name} có mã hồ sơ ${key} của công dân ${infoUser === null || infoUser === void 0 ? void 0 : infoUser.full_name} nộp hồ sơ THÀNH CÔNG. CỔNG DỊCH VỤ CÔNG TRỰC TUYẾN`;
+                try {
+                    // Gửi email
+                    await (0, sendGmail_1.sendGmail)(message);
+                    await (0, sendSMS_1.sendSMS)(message);
+                    // console.log("Email sent:", info.response);
+                }
+                catch (error) {
+                    console.error("Error sending email:", error);
+                }
                 response.json({
                     data: { key, access_key },
                     success: true,

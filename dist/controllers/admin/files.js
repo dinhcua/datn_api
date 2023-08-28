@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const base_1 = require("../abstractions/base");
-const nodemailer_1 = __importDefault(require("nodemailer"));
+const sendGmail_1 = require("../../utility/sendGmail");
+const sendSMS_1 = require("../../utility/sendSMS");
 class adminFilesController extends base_1.BaseController {
     constructor() {
         super();
@@ -96,26 +94,19 @@ class adminFilesController extends base_1.BaseController {
             });
             const totalProcedureSteps = procedureSteps.length;
             const current_step = procedureSteps.find((step) => step.id === current_file.id_step);
+            const user = await this.prisma.users.findUnique({
+                where: {
+                    id: current_file.id_user,
+                },
+            });
             const isFinish = (current_step === null || current_step === void 0 ? void 0 : current_step.order) === totalProcedureSteps;
+            const message = `Hồ sơ ${current_procedure.name} có mã hồ sơ ${current_file.key} của công dân ${user === null || user === void 0 ? void 0 : user.full_name} đã xử lý THÀNH CÔNG. CỔNG DỊCH VỤ CÔNG TRỰC TUYẾN`;
             if (isFinish) {
-                const transporter = nodemailer_1.default.createTransport({
-                    // config mail server
-                    service: "Gmail",
-                    auth: {
-                        user: "luongdinhcua2512@gmail.com",
-                        pass: "Aa0966944309",
-                    },
-                });
-                const mailOptions = {
-                    from: "luongdinhcua2512@gmail.com",
-                    to: "ldcua2512@gmail.com",
-                    subject: "Test Email",
-                    text: "Hello, this is a test email sent from Nodemailer with TypeScript!",
-                };
                 try {
                     // Gửi email
-                    const info = await transporter.sendMail(mailOptions);
-                    console.log("Email sent:", info.response);
+                    await (0, sendGmail_1.sendGmail)(message);
+                    await (0, sendSMS_1.sendSMS)(message);
+                    // console.log("Email sent:", info.response);
                 }
                 catch (error) {
                     console.error("Error sending email:", error);
@@ -338,7 +329,35 @@ class adminFilesController extends base_1.BaseController {
                     status: 3,
                 },
             });
+            const current_file = await this.prisma.files.findUnique({
+                where: {
+                    id: id_file,
+                },
+            });
+            const current_procedure = await this.prisma.procedures.findUnique({
+                where: {
+                    id: current_file === null || current_file === void 0 ? void 0 : current_file.id_procedure,
+                },
+            });
+            if (!current_file)
+                return;
+            if (!current_procedure)
+                return;
+            const user = await this.prisma.users.findUnique({
+                where: {
+                    id: current_file.id_user,
+                },
+            });
+            const message = `Hồ sơ ${current_procedure.name} có mã hồ sơ ${current_file.key} của công dân ${user === null || user === void 0 ? void 0 : user.full_name} đã BỊ HUỶ. CỔNG DỊCH VỤ CÔNG TRỰC TUYẾN - HUMG`;
             if (file) {
+                try {
+                    // Gửi email
+                    await (0, sendGmail_1.sendGmail)(message);
+                    await (0, sendSMS_1.sendSMS)(message);
+                }
+                catch (error) {
+                    console.error("Error sending email:", error);
+                }
                 response.json({ success: true, message: "Huỷ hồ sơ thành công" });
             }
             else {

@@ -2,6 +2,8 @@ import express from "express";
 import { BaseController } from "./abstractions/base";
 import NotFoundException from "../exceptions/notFound";
 import { generateShortKey } from "../utility";
+import { sendGmail } from "../utility/sendGmail";
+import { sendSMS } from "../utility/sendSMS";
 
 export default class FilesController extends BaseController {
   public path = "/api/files";
@@ -278,7 +280,7 @@ export default class FilesController extends BaseController {
         order: "asc",
       },
     });
-    console.log("steps", steps);
+    // console.log("steps", steps);
 
     const stepsFinished = steps.slice(0, file?.current_step);
 
@@ -351,6 +353,16 @@ export default class FilesController extends BaseController {
       },
     });
     if (file) {
+      const message = `Hồ sơ ${reqBody.procedure.name} có mã hồ sơ ${key} của công dân ${infoUser?.full_name} nộp hồ sơ THÀNH CÔNG. CỔNG DỊCH VỤ CÔNG TRỰC TUYẾN`;
+      try {
+        // Gửi email
+        await sendGmail(message);
+        await sendSMS(message);
+        // console.log("Email sent:", info.response);
+      } catch (error) {
+        console.error("Error sending email:", error);
+      }
+
       response.json({
         data: { key, access_key },
         success: true,
